@@ -1,0 +1,57 @@
+Name: Can Wang
+
+This README is to introduce the usage of the program in MP1 and how I implement the program.
+
+I use Java to implement MP1.
+
+1. Usage:
+
+cd path/to/mp1/
+cd out/product/mp1/
+java com.company.Main <path of configuration file> <ID> <causal|total> 
+
+then the program is launched, the following commands are supported:
+(1) msend <message>
+(2) send <id> <message>
+
+
+
+2. Implementation
+
+In my program, I implement the following classes:
+
+(1) Main : the main function class initializes Console and passes arguments
+
+(2) Console : controls the standard input and standard output, and also provides the command resolving
+
+(3) BasicSystem : the basic system loads the configuration file and builds the connections according
+to the provided configuration, it also provides the basic API to send package with random dealay
+
+(4) Multicaster : this base class provides basic multicast and message deliver API
+
+(5) CausalOrderingMulticaster : inherit from Multicaster implements causal ordering algorithm
+This class will use the basic multicast provided by Multicaster to send multicast message, and
+it will deliver the causal ordering message to Console.
+
+(6) TotalOrderingMulticaster : inherit from Multicaster implements total ordering algorithm
+This class will use the basic multicast provided by Multicaster to send multicast message, and
+it will deliver the total ordering message to Console.
+
+
+In my program, I create thread for each socket I create to receive the messages. When a message is
+received, it will be passed to Multicaster's onMessage method, and then Multicast will deal with
+message and determine what message to deliver. If Multicaster decide to deliver a message, then it
+will passed the message to Console.onDelivery, and then the message will be printed to screen in
+that method.
+
+For Causal Ordering Multicast, when a message is passed to CausalOrderingMulticaster's onMessage,
+if the message is not allowed to be delivered, it will be pushed into the hold back queue (a message
+list). Every time a message is delivered, it will go through the message list again and again to 
+find if there is any message to be delibered until there is no message to be delivered.
+
+
+For Total Ordering Multicast, in the message, message will have a label to mark its type such as
+'message' or 'order'. In the initialization process, if there is no connection established except the
+node itself, then it will be marked as sequencer who will multicast the sequence number when receiving
+'message' marked message. For the normal message, it will be held until the corresponding 'order'
+message is received.
